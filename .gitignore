@@ -1,0 +1,11 @@
+venv/
+.env
+script/
+notes
+.idea/
+__pycache__/
+*.pyc
+
+public_storage/*
+
+!public_storage/.gitkeep
