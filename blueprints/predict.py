@@ -49,7 +49,7 @@ def predict_custom_api():
             return Response(json.dumps({"status": "error", "message": "文件必须是txt格式！"}, ensure_ascii=False),
                             mimetype='application/json; charset=utf-8', status=400)
         if type_ == 'svm':
-            result = predict_service.svm_predict(custom_file_path)
+            result = predict_service.svm_predict(model, custom_file_path)
         elif type_ == 'quantitative':
             result = predict_service.quantitative_predict(model, custom_file_path)
         else:  # tree
