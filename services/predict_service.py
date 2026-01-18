@@ -15,18 +15,6 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-# 加载模型和特征信息
-try:
-    svm_model = joblib.load(ModelConfig.SVM_MODEL_CONFIGS["default"]["model_path"])
-    svm_scaler = joblib.load(ModelConfig.SVM_MODEL_CONFIGS["default"]["scaler_path"])
-    svm_train_data = pd.read_csv(ModelConfig.SVM_MODEL_CONFIGS["default"]["training_csv"])
-    svm_feature_names = svm_train_data.columns[:-1].tolist()
-    svm_n_features = len(svm_feature_names)
-    print("模型和特征信息加载成功")
-except Exception as e:
-    print(f"加载模型失败: {e}")
-    raise
-
 
 def allowed_file(filename, allowed_ext=None):
     allowed_ext = allowed_ext or {'txt'}
@@ -38,22 +26,32 @@ def get_month_folder():
     return datetime.now().strftime("%Y%m")
 
 
-def svm_predict(custom_file_path=None):
+def svm_predict(model_name: str, custom_file_path=None):
     result_dict = {}
     try:
-        default_txt = ModelConfig.SVM_MODEL_CONFIGS["default"]["default_txt"]
-        target_file = custom_file_path if custom_file_path else default_txt
+        # ===== 读取模型配置 =====
+        if model_name not in ModelConfig.SVM_MODEL_CONFIGS:
+            return {"status": "error", "message": f"未知 SVM 模型: {model_name}"}
 
-        # 安全检查
-        if custom_file_path:
-            normalized_path = os.path.abspath(os.path.realpath(custom_file_path))
-            if not os.path.exists(normalized_path):
-                return {"status": "error", "message": f"自定义文件不存在 → {custom_file_path}"}
-            if not normalized_path.endswith('.txt'):
-                return {"status": "error", "message": "自定义文件必须是txt格式"}
+        config = ModelConfig.SVM_MODEL_CONFIGS[model_name]
 
-        # 读取文件
-        with open(target_file, 'r') as f:
+        svm_model = joblib.load(config["model_path"])
+        svm_scaler = joblib.load(config["scaler_path"])
+        train_data = pd.read_csv(config["training_csv"])
+        svm_feature_names = train_data.columns[:-1].tolist()
+        svm_n_features = len(svm_feature_names)
+
+        target_file = custom_file_path or config["default_txt"]
+
+        # ===== 文件安全校验 =====
+        normalized_path = os.path.abspath(os.path.realpath(target_file))
+        if not os.path.exists(normalized_path):
+            return {"status": "error", "message": "文件不存在"}
+        if not normalized_path.endswith(".txt"):
+            return {"status": "error", "message": "文件必须是 txt 格式"}
+
+        # ===== 读取数据 =====
+        with open(normalized_path, "r") as f:
             lines = f.readlines()
 
         second_column = []
@@ -63,62 +61,77 @@ def svm_predict(custom_file_path=None):
                 try:
                     second_column.append(float(parts[1]))
                 except ValueError:
-                    print(f"警告：跳过无效值 '{parts[1]}'")
+                    continue
 
         if not second_column:
-            return {"status": "error", "message": f"文件 {os.path.basename(target_file)} 中未提取到有效数据"}
+            return {"status": "error", "message": "未提取到有效数据"}
 
-        # 归一化
-        second_column = MinMaxScaler().fit_transform(np.array(second_column).reshape(-1, 1)).flatten()
-        data_length = len(second_column)
+        # ===== 归一化 =====
+        second_column = MinMaxScaler().fit_transform(
+            np.array(second_column).reshape(-1, 1)
+        ).flatten()
 
-        # 调整长度
-        if data_length > svm_n_features:
-            indices = np.linspace(0, data_length - 1, svm_n_features, dtype=int)
+        original_length = len(second_column)
+
+        # ===== 长度对齐 =====
+        if original_length > svm_n_features:
+            indices = np.linspace(0, original_length - 1, svm_n_features, dtype=int)
             processed_data = [second_column[i] for i in indices]
-        elif data_length < svm_n_features:
+        elif original_length < svm_n_features:
             processed_data = second_column.tolist()
             while len(processed_data) < svm_n_features:
                 pos = random.randint(1, len(processed_data) - 1) if len(processed_data) > 1 else 0
-                new_val = (processed_data[pos - 1] + processed_data[pos]) / 2 if len(processed_data) > 1 else processed_data[0]
+                new_val = (
+                    (processed_data[pos - 1] + processed_data[pos]) / 2
+                    if len(processed_data) > 1
+                    else processed_data[0]
+                )
                 processed_data.insert(pos, new_val)
         else:
             processed_data = second_column.tolist()
 
-        # 预测
+        # ===== 预测 =====
         input_data = pd.DataFrame([processed_data], columns=svm_feature_names)
         input_scaled = svm_scaler.transform(input_data)
 
         prediction = svm_model.predict(input_scaled)[0]
-        predicted_type = str(prediction) if not isinstance(prediction, str) else prediction
+        predicted_type = str(prediction)
 
-        # 置信度计算
         confidence = 0.0
         probabilities = {}
+        # --- 新增判定变量 ---
+        alarm_type = None
 
-        if hasattr(svm_model, 'predict_proba'):
+        if hasattr(svm_model, "predict_proba"):
             probs = svm_model.predict_proba(input_scaled)[0]
             for cls, prob in zip(svm_model.classes_, probs):
-                probabilities[f'prob_{str(cls)}'] = round(float(prob), 8)
-            confidence = probabilities[f'prob_{predicted_type}']
+                probabilities[f"prob_{cls}"] = round(float(prob), 8)
+            confidence = probabilities.get(f"prob_{predicted_type}", 0.0)
+            # 整合新脚本判别逻辑：若概率 > 0.8 则报警
+            if any(probs > 0.8):
+                alarm_type = svm_model.classes_[np.argmax(probs)]
         else:
             dec_vals = svm_model.decision_function(input_scaled)[0]
-            if len(dec_vals) > 1:
-                confidence = float(abs(dec_vals).max() / abs(dec_vals).sum())
-            else:
-                confidence = float(1.0 / (1 + np.exp(-abs(dec_vals[0]))))
-            confidence = round(confidence, 8)
+            confidence = (
+                abs(dec_vals).max() / abs(dec_vals).sum()
+                if len(dec_vals) > 1
+                else 1 / (1 + np.exp(-abs(dec_vals[0])))
+            )
+            # 整合新脚本判别逻辑：若置信度 > 0.8 则报警
+            if confidence > 0.8:
+                alarm_type = predicted_type
 
         result_dict["status"] = "success"
         result_dict["file_info"] = {
-            # "used_file": target_file,
             "used_file": "",
-            "file_type": "custom" if custom_file_path else "default"
+            "file_type": "custom" if custom_file_path else "default",
+            "model": model_name
         }
         result_dict["result"] = {
             "predicted_type": predicted_type,
-            "confidence": confidence,
-            "original_length": data_length,
+            "confidence": round(float(confidence), 8),
+            "alarm_type": alarm_type,  # 需告警类型；
+            "original_length": original_length,
             "processed_length": svm_n_features
         }
         if probabilities:
@@ -127,10 +140,10 @@ def svm_predict(custom_file_path=None):
         return result_dict
 
     except Exception as e:
-        return {"status": "error", "message": f"处理或预测过程中出错: {str(e)}"}
+        return {"status": "error", "message": f"SVM预测异常: {str(e)}"}
 
 
-def quantitative_predict(compound_type, file_path):
+def quantitative_predict(compound_type: str, file_path):
     """
     通用定量分析函数 - 类似process_and_predict风格
     只返回JSON结果，不保存CSV

@@ -25,7 +25,7 @@ nano_pj/
 ├── assets/               # Resource files
 │   ├── svm/             # SVM related data
 │   └── tree/            # Decision tree related data
-├── public_storage/       # Public storage
+└── public_storage/       # Public storage
 ```
 
 ## Installation Steps
