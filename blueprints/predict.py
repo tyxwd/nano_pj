@@ -14,7 +14,7 @@ predict_bp = Blueprint('predict', __name__)
 
 @predict_bp.route('/predict', methods=['GET'])
 def predict_api():
-    result = predict_service.svm_predict()
+    result = predict_service.svm_predict('default')
     return Response(json.dumps(result, ensure_ascii=False, indent=2),
                     mimetype='application/json; charset=utf-8')
 
