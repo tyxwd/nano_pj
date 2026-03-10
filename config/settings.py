@@ -65,7 +65,42 @@ class ModelConfig:
             "scaler_path": os.path.join(ASSETS_ROOT, "svm/gzb/scaler.pkl"),
             "training_csv": os.path.join(ASSETS_ROOT, "svm/gzb/training.csv"),
             "default_txt": os.path.join(ASSETS_ROOT, "svm/gzb/newdata.txt")
-        }
+        },
+        "han": {
+            "name": "HAN_SVM",
+            "model_path": os.path.join(ASSETS_ROOT, "svm/han/svm_model_tuned.pkl"),
+            "scaler_path": os.path.join(ASSETS_ROOT, "svm/han/scaler.pkl"),
+            "training_csv": os.path.join(ASSETS_ROOT, "svm/han/training.csv"),
+            "default_txt": os.path.join(ASSETS_ROOT, "svm/han/newdata.txt")
+        },
+        "lei": {
+            "name": "LEI_SVM",
+            "model_path": os.path.join(ASSETS_ROOT, "svm/lei/svm_model_tuned.pkl"),
+            "scaler_path": os.path.join(ASSETS_ROOT, "svm/lei/scaler.pkl"),
+            "training_csv": os.path.join(ASSETS_ROOT, "svm/lei/training.csv"),
+            "default_txt": os.path.join(ASSETS_ROOT, "svm/lei/newdata.txt")
+        },
+        "niao": {
+            "name": "NIAO_SVM",
+            "model_path": os.path.join(ASSETS_ROOT, "svm/niao/svm_model_tuned.pkl"),
+            "scaler_path": os.path.join(ASSETS_ROOT, "svm/niao/scaler.pkl"),
+            "training_csv": os.path.join(ASSETS_ROOT, "svm/niao/training.csv"),
+            "default_txt": os.path.join(ASSETS_ROOT, "svm/niao/newdata.txt")
+        },
+        "shui": {
+            "name": "SHUI_SVM",
+            "model_path": os.path.join(ASSETS_ROOT, "svm/shui/svm_model_tuned.pkl"),
+            "scaler_path": os.path.join(ASSETS_ROOT, "svm/shui/scaler.pkl"),
+            "training_csv": os.path.join(ASSETS_ROOT, "svm/shui/training.csv"),
+            "default_txt": os.path.join(ASSETS_ROOT, "svm/shui/newdata.txt")
+        },
+        "xueqing": {
+            "name": "XUEQING_SVM",
+            "model_path": os.path.join(ASSETS_ROOT, "svm/xueqing/svm_model_tuned.pkl"),
+            "scaler_path": os.path.join(ASSETS_ROOT, "svm/xueqing/scaler.pkl"),
+            "training_csv": os.path.join(ASSETS_ROOT, "svm/xueqing/training.csv"),
+            "default_txt": os.path.join(ASSETS_ROOT, "svm/xueqing/newdata.txt")
+        },
     }
     QUANTITATIVE_COMPOUND_CONFIGS = {
         'retinol': {
@@ -174,6 +209,42 @@ class ModelConfig:
                 'a': 0.0076,
                 'b': 0.8041,
                 'description': 'x = (y - 0.8041) / 0.0076'
+            }
+        },
+        'crp': {
+            'name': 'C-Reactive Protein',
+            'unit': 'μg/ml',
+            'required_rows': 1209,
+            'intensity_1': {'row': 343, 'index': 342, 'column': 1},
+            'intensity_2': {'row': 1177, 'index': 1176, 'column': 1},
+            'formula': {
+                'a': 0.035,
+                'b': 0.0162,
+                'description': 'x = (y - 0.0162) / 0.035'
+            }
+        },
+        'il': {
+            'name': 'Interleukin',
+            'unit': 'ng/ml',
+            'required_rows': 1280,
+            'intensity_1': {'row': 346, 'index': 345, 'column': 1},
+            'intensity_2': {'row': 1177, 'index': 1176, 'column': 1},
+            'formula': {
+                'a': 0.0025,
+                'b': 0.1159,
+                'description': 'x = (y - 0.1159) / 0.0025'
+            }
+        },
+        'ua': {
+            'name': 'Uric Acid',
+            'unit': 'μg/ml',
+            'required_rows': 1280,
+            'intensity_1': {'row': 639, 'index': 638, 'column': 1},
+            'intensity_2': {'row': 1177, 'index': 1176, 'column': 1},
+            'formula': {
+                'a': 0.099,
+                'b': 3.7192,
+                'description': 'x = (y - 3.7192) / 0.099'
             }
         }
     }

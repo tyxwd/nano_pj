@@ -73,19 +73,19 @@ def svm_predict(model_name: str, custom_file_path=None):
 
         original_length = len(second_column)
 
-        # ===== 长度对齐 =====
+        # ===== 长度对齐（改进版） =====
         if original_length > svm_n_features:
             indices = np.linspace(0, original_length - 1, svm_n_features, dtype=int)
             processed_data = [second_column[i] for i in indices]
         elif original_length < svm_n_features:
             processed_data = second_column.tolist()
             while len(processed_data) < svm_n_features:
-                pos = random.randint(1, len(processed_data) - 1) if len(processed_data) > 1 else 0
-                new_val = (
-                    (processed_data[pos - 1] + processed_data[pos]) / 2
-                    if len(processed_data) > 1
-                    else processed_data[0]
-                )
+                # 随机插入插值点（改进：允许 pos=0）
+                pos = random.randint(0, len(processed_data) - 1)
+                if pos == 0:
+                    new_val = processed_data[0]
+                else:
+                    new_val = (processed_data[pos - 1] + processed_data[pos]) / 2
                 processed_data.insert(pos, new_val)
         else:
             processed_data = second_column.tolist()
@@ -99,25 +99,28 @@ def svm_predict(model_name: str, custom_file_path=None):
 
         confidence = 0.0
         probabilities = {}
-        # --- 新增判定变量 ---
         alarm_type = None
 
         if hasattr(svm_model, "predict_proba"):
             probs = svm_model.predict_proba(input_scaled)[0]
             for cls, prob in zip(svm_model.classes_, probs):
                 probabilities[f"prob_{cls}"] = round(float(prob), 8)
-            confidence = probabilities.get(f"prob_{predicted_type}", 0.0)
-            # 整合新脚本判别逻辑：若概率 > 0.8 则报警
+            # 直接获取预测类别的概率
+            confidence = probs[np.where(svm_model.classes_ == prediction)][0]
+            # 若任一概率 > 0.8，报警类别为最大概率对应的类别
             if any(probs > 0.8):
                 alarm_type = svm_model.classes_[np.argmax(probs)]
         else:
-            dec_vals = svm_model.decision_function(input_scaled)[0]
-            confidence = (
-                abs(dec_vals).max() / abs(dec_vals).sum()
-                if len(dec_vals) > 1
-                else 1 / (1 + np.exp(-abs(dec_vals[0])))
-            )
-            # 整合新脚本判别逻辑：若置信度 > 0.8 则报警
+            # 没有概率输出，使用 decision_function 计算置信度
+            dec_values = svm_model.decision_function(input_scaled)
+            # 处理不同形状的决策值
+            if dec_values.ndim == 1 or (dec_values.ndim == 2 and dec_values.shape[1] == 1):
+                # 二分类情况：使用 sigmoid 将决策值转换为概率（近似）
+                confidence = 1.0 / (1 + np.exp(-abs(dec_values[0])))
+            else:
+                # 多分类情况：归一化决策值作为置信度
+                dec_vals = dec_values[0]  # 第一个样本的决策值向量
+                confidence = abs(dec_vals).max() / abs(dec_vals).sum()
             if confidence > 0.8:
                 alarm_type = predicted_type
 
@@ -150,7 +153,6 @@ def quantitative_predict(compound_type: str, file_path):
     """
     result_dict = {}
 
-    # 化合物配置参数（修正后的索引）
     compound_configs = ModelConfig.QUANTITATIVE_COMPOUND_CONFIGS
 
     try:
@@ -256,14 +258,14 @@ def quantitative_predict(compound_type: str, file_path):
 
         result_dict["result"] = {
             "compound_name": config['name'],
-            "concentration": float(x),
+            "concentration": float(x) if float(x) >= 0 else 0,
             "unit": config['unit'],
             "calculation_details": f"x = ({y:.6f} - {b}) / {a} = {x:.6f}"
         }
 
         # 添加质量控制信息
         result_dict["quality_info"] = {
-            "data_validation": "passed",
+            "data_validation": "passed" if float(x) >= 0 else "failed",
             "rows_checked": num_rows,
             "minimum_required": required_rows,
             "intensity_ratio": float(y)
