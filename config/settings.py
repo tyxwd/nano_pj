@@ -101,6 +101,13 @@ class ModelConfig:
             "training_csv": os.path.join(ASSETS_ROOT, "svm/xueqing/training.csv"),
             "default_txt": os.path.join(ASSETS_ROOT, "svm/xueqing/newdata.txt")
         },
+        "pesticide": {
+            "name": "PESTICIDE_SVM",
+            "model_path": os.path.join(ASSETS_ROOT, "svm/pesticide/svm_model_tuned.pkl"),
+            "scaler_path": os.path.join(ASSETS_ROOT, "svm/pesticide/scaler.pkl"),
+            "training_csv": os.path.join(ASSETS_ROOT, "svm/pesticide/training.csv"),
+            "default_txt": os.path.join(ASSETS_ROOT, "svm/pesticide/newdata.txt")
+        },
     }
     QUANTITATIVE_COMPOUND_CONFIGS = {
         'retinol': {
@@ -246,7 +253,32 @@ class ModelConfig:
                 'b': 3.7192,
                 'description': 'x = (y - 3.7192) / 0.099'
             }
-        }
+        },
+
+        'sjl': {
+            'name': 'Thiabendazole',
+            'unit': 'ng/ml',
+            'required_rows': 850,
+            'intensity_1': {'row': 215, 'index': 214, 'column': 1},
+            'intensity_2': {'row': 298, 'index': 297, 'column': 1},
+            'formula': {
+                'a': 0.528,
+                'b': 0.227,
+                'description': 'x = (y - 0.227) / 0.528'
+            }
+        },
+        'fms': {
+            'name': 'Thiram',
+            'unit': 'ng/ml',
+            'required_rows': 850,
+            'intensity_1': {'row': 579, 'index': 578, 'column': 1},
+            'intensity_2': {'row': 298, 'index': 297, 'column': 1},
+            'formula': {
+                'a': 1.058,
+                'b': -1.295,
+                'description': 'x = (y - (-1.295)) / 1.058'  # 或 'x = (y + 1.295) / 1.058'
+            }
+        },
     }
     TREE_MODEL_CONFIGS = {
         "hu_r": {
