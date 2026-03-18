@@ -265,7 +265,8 @@ class ModelConfig:
                 'a': 0.528,
                 'b': 0.227,
                 'description': 'x = (y - 0.227) / 0.528'
-            }
+            },
+            'transform': '10^x'
         },
         'fms': {
             'name': 'Thiram',
@@ -277,7 +278,8 @@ class ModelConfig:
                 'a': 1.058,
                 'b': -1.295,
                 'description': 'x = (y - (-1.295)) / 1.058'  # 或 'x = (y + 1.295) / 1.058'
-            }
+            },
+            'transform': '10^x'
         },
     }
     TREE_MODEL_CONFIGS = {

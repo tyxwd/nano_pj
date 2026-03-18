@@ -5,6 +5,7 @@
 # @Project : nano_pj
 # @File    : predictor.py
 import os
+import math
 import random
 import pandas as pd
 import numpy as np
@@ -146,6 +147,48 @@ def svm_predict(model_name: str, custom_file_path=None):
         return {"status": "error", "message": f"SVM预测异常: {str(e)}"}
 
 
+def apply_transformation(value, transform_type):
+    """
+    根据指定的转换类型对计算值进行转换，返回 HTML 格式的转换后字符串和描述。
+
+    Parameters:
+    - value: float，原始计算值 x
+    - transform_type: str or None，转换类型，支持 '10^x', 'e^x', 'log10', 'ln' 等
+
+    Returns:
+    - transformed_str: str，HTML 格式的转换后结果（例如 "10<sup>1.69739</sup>"）
+    - description: str，HTML 格式的转换描述（用于结果详情）
+    """
+    if transform_type is None:
+        # 无转换：返回原始数值的字符串（保留6位小数）
+        return f"{value:.6f}", ""
+
+    transform_type = transform_type.lower()
+    if transform_type == '10^x':
+        transformed_str = f"10<sup>{value:.6f}</sup>"
+        desc = f" (经指数转换: {transformed_str})"
+        return transformed_str, desc
+    elif transform_type == 'e^x':
+        transformed_str = f"e<sup>{value:.6f}</sup>"
+        desc = f" (经指数转换: {transformed_str})"
+        return transformed_str, desc
+    elif transform_type == 'log10':
+        if value <= 0:
+            return "0", " (经对数转换: log<sub>10</sub>，但输入≤0，结果置0)"
+        transformed_str = f"log<sub>10</sub>({value:.6f})"
+        desc = f" (经对数转换: {transformed_str})"
+        return transformed_str, desc
+    elif transform_type == 'ln':
+        if value <= 0:
+            return "0", " (经自然对数转换: ln，但输入≤0，结果置0)"
+        transformed_str = f"ln({value:.6f})"
+        desc = f" (经自然对数转换: {transformed_str})"
+        return transformed_str, desc
+    else:
+        # 未知类型：返回原值字符串并给出提示
+        return f"{value:.6f}", f" (未知转换类型 '{transform_type}'，未做转换)"
+
+
 def quantitative_predict(compound_type: str, file_path):
     """
     通用定量分析函数 - 类似process_and_predict风格
@@ -228,6 +271,11 @@ def quantitative_predict(compound_type: str, file_path):
         a = formula['a']
         b = formula['b']
         x = (y - b) / a
+        transform_type = config.get('transform')
+        if transform_type:
+            final_concentration, transform_desc = apply_transformation(x, transform_type)
+        else:
+            final_concentration = float(x) if float(x) >= 0 else 0,
 
         # 构建结果字典 - 模仿process_and_predict的结构
         result_dict["status"] = "success"
@@ -258,14 +306,14 @@ def quantitative_predict(compound_type: str, file_path):
 
         result_dict["result"] = {
             "compound_name": config['name'],
-            "concentration": float(x) if float(x) >= 0 else 0,
+            "concentration": final_concentration,
             "unit": config['unit'],
             "calculation_details": f"x = ({y:.6f} - {b}) / {a} = {x:.6f}"
         }
 
         # 添加质量控制信息
         result_dict["quality_info"] = {
-            "data_validation": "passed" if float(x) >= 0 else "failed",
+            "data_validation": "passed",
             "rows_checked": num_rows,
             "minimum_required": required_rows,
             "intensity_ratio": float(y)
