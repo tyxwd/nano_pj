@@ -108,6 +108,13 @@ class ModelConfig:
             "training_csv": os.path.join(ASSETS_ROOT, "svm/pesticide/training.csv"),
             "default_txt": os.path.join(ASSETS_ROOT, "svm/pesticide/newdata.txt")
         },
+        "osteoporosis": {
+            "name": "Osteoporosis_SVM",
+            "model_path": os.path.join(ASSETS_ROOT, "svm/osteoporosis/svm_model_tuned.pkl"),
+            "scaler_path": os.path.join(ASSETS_ROOT, "svm/osteoporosis/scaler.pkl"),
+            "training_csv": os.path.join(ASSETS_ROOT, "svm/osteoporosis/training.csv"),
+            "default_txt": os.path.join(ASSETS_ROOT, "svm/osteoporosis/newdata.txt")
+        },
     }
     QUANTITATIVE_COMPOUND_CONFIGS = {
         'retinol': {
