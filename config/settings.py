@@ -4,6 +4,7 @@
 # @Time    : 2025/12/15 15:47
 # @Project : nano_pj
 # @File    : settings.py
+from ast import main
 import os
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -115,6 +116,41 @@ class ModelConfig:
             "training_csv": os.path.join(ASSETS_ROOT, "svm/osteoporosis/training.csv"),
             "default_txt": os.path.join(ASSETS_ROOT, "svm/osteoporosis/newdata.txt")
         },
+        "quino":{
+            "name": "Quino_SVM",
+            "model_path": os.path.join(ASSETS_ROOT, "svm/quino/svm_model_tuned.pkl"),
+            "scaler_path": os.path.join(ASSETS_ROOT, "svm/quino/scaler.pkl"),
+            "training_csv": os.path.join(ASSETS_ROOT, "svm/quino/training.csv"),
+            "default_txt": os.path.join(ASSETS_ROOT, "svm/quino/newdata.txt")
+        },
+        "ciplvfx":{
+            "name": "CIPLVFX_SVM",
+            "model_path": os.path.join(ASSETS_ROOT, "svm/ciplvfx/svm_model_tuned.pkl"),
+            "scaler_path": os.path.join(ASSETS_ROOT, "svm/ciplvfx/scaler.pkl"),
+            "training_csv": os.path.join(ASSETS_ROOT, "svm/ciplvfx/training.csv"),
+            "default_txt": os.path.join(ASSETS_ROOT, "svm/ciplvfx/newdata.txt")
+        },
+        "cippef":{
+            "name": "CIPPEF_SVM",
+            "model_path": os.path.join(ASSETS_ROOT, "svm/cippef/svm_model_tuned.pkl"),
+            "scaler_path": os.path.join(ASSETS_ROOT, "svm/cippef/scaler.pkl"),
+            "training_csv": os.path.join(ASSETS_ROOT, "svm/cippef/training.csv"),
+            "default_txt": os.path.join(ASSETS_ROOT, "svm/cippef/newdata.txt")
+        },
+        "cippeflvfx":{
+            "name": "CIPPEFLVFX_SVM",
+            "model_path": os.path.join(ASSETS_ROOT, "svm/cippeflvfx/svm_model_tuned.pkl"),
+            "scaler_path": os.path.join(ASSETS_ROOT, "svm/cippeflvfx/scaler.pkl"),
+            "training_csv": os.path.join(ASSETS_ROOT, "svm/cippeflvfx/training.csv"),
+            "default_txt": os.path.join(ASSETS_ROOT, "svm/cippeflvfx/newdata.txt")
+        },
+        "peflvfx":{
+            "name": "PEFLVFX_SVM",
+            "model_path": os.path.join(ASSETS_ROOT, "svm/peflvfx/svm_model_tuned.pkl"),
+            "scaler_path": os.path.join(ASSETS_ROOT, "svm/peflvfx/scaler.pkl"),
+            "training_csv": os.path.join(ASSETS_ROOT, "svm/peflvfx/training.csv"),
+            "default_txt": os.path.join(ASSETS_ROOT, "svm/peflvfx/newdata.txt")
+        }
     }
     QUANTITATIVE_COMPOUND_CONFIGS = {
         'retinol': {
@@ -288,6 +324,57 @@ class ModelConfig:
             },
             'transform': '10^x'
         },
+        
+        'cip': {
+            'name': 'CIP',
+            'unit': 'ug/ml',
+            'required_rows': 850,
+            'intensity_1': {'row': 579, 'index': 578, 'column': 1},
+            'intensity_2': {'row': 301, 'index': 300, 'column': 1},
+            'formula': {
+                # "slope": 0.9835,
+                # "intercept": 0.6464,
+                'a': 0.9835,
+                'b': 0.6464,
+                'description': 'x = (y - 0.6464) / 0.9835'
+            }
+        },
+        'norf': {
+            'name': 'NORF',
+            'unit': 'ug/ml',
+            'required_rows': 850,
+            'intensity_1': {'row': 402, 'index': 401, 'column': 1},
+            'intensity_2': {'row': 798, 'index': 797, 'column': 1},
+            'formula': {
+                'a': 0.991,
+                'b': 1.8743,
+                'description': 'x = (y - 1.8743) / 0.991'
+            }
+        },
+        'pef': {
+            'name': 'PEF',
+            'unit': 'ug/ml',
+            'required_rows': 850,
+            'intensity_1': {'row': 404, 'index': 403, 'column': 1},
+            'intensity_2': {'row': 795, 'index': 794, 'column': 1},
+            'formula': {
+                'a': 0.0451,
+                'b': 0.7205,
+                'description': 'x = (y - 0.7205) / 0.0451'
+            }
+        },
+        'cip_rengonghu':{
+            'name': 'CIP', # (Artificial Lake)
+            'unit': 'umol/ml',
+            'required_rows': 850,
+            'intensity_1': {'row': 588, 'index': 587, 'column': 1},
+            'intensity_2': {'row': 1122, 'index': 1121, 'column': 1},
+            'formula': {
+                'a': 0.9934,
+                'b': 10.509,
+                'description': 'x = (y - 10.509) / 0.9934'
+            }
+        }
     }
     TREE_MODEL_CONFIGS = {
         "hu_r": {

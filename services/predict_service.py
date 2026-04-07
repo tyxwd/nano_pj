@@ -275,7 +275,7 @@ def quantitative_predict(compound_type: str, file_path):
         if transform_type:
             final_concentration, transform_desc = apply_transformation(x, transform_type)
         else:
-            final_concentration = float(x) if float(x) >= 0 else 0,
+            final_concentration = float(x) if float(x) >= 0 else 0
 
         # 构建结果字典 - 模仿process_and_predict的结构
         result_dict["status"] = "success"
