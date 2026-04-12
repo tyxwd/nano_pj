@@ -1,0 +1,170 @@
+{% extends "model_admin_base.html" %}
+
+{% block title %}站点配置管理{% endblock %}
+
+{% block content %}
+{% if selected_site %}
+<article class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <h2 style="margin-bottom:0;">配置站点: {{ selected_site.site_key }}</h2>
+        <a href="{{ url_for('model_admin.site_admin_page') }}" class="btn" style="display:inline-block;text-decoration:none;">退出配置详情</a>
+    </div>
+    <p class="hint">默认初始站点不可修改；后续新增站点可调整计算类型和模型范围。</p>
+    {% if site_message %}<p class="msg ok">{{ site_message }}</p>{% endif %}
+    {% if site_error %}<p class="msg err">{{ site_error }}</p>{% endif %}
+
+    {% if selected_site.is_builtin == 1 %}
+    <p class="hint">当前站点为默认初始站点，仅允许查看，不支持修改。</p>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('model_admin.save_site_scope_action') }}">
+        <input type="hidden" name="site_key" value="{{ selected_site.site_key }}">
+
+        <div class="row">
+            <label>计算类型</label>
+            <div>
+                <span class="badge">SVM：<strong id="svm-count">{{ selected_scope.svm|length }}</strong> 种</span>
+                <span class="badge" style="margin-left:8px;">TREE：<strong id="tree-count">{{ selected_scope.tree|length }}</strong> 种</span>
+                <span class="badge" style="margin-left:8px;">定量：<strong id="quant-count">{{ selected_scope.quantitative|length }}</strong> 种</span>
+            </div>
+        </div>
+
+        <div class="row">
+            <label>SVM模型</label>
+            <div>
+                {% for item in svm_models %}
+                <label style="display:inline-block; margin-right:12px; margin-bottom:6px;{% if item.is_active != 1 %}opacity:0.5;cursor:not-allowed;{% endif %}">
+                    <input type="checkbox" name="svm_keys" value="{{ item.model_key }}" {% if item.model_key in selected_scope.svm %}checked{% endif %} {% if selected_site.is_builtin == 1 or item.is_active != 1 %}disabled{% endif %} title="{% if item.is_active != 1 %}该模型未激活{% else %}{% endif %}">
+                    {{ item.model_key }}{% if item.is_active != 1 %} <span style="color:#999;font-size:0.85em;">(未激活)</span>{% endif %}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="row">
+            <label>TREE模型</label>
+            <div>
+                {% for item in tree_models %}
+                <label style="display:inline-block; margin-right:12px; margin-bottom:6px;{% if item.is_active != 1 %}opacity:0.5;cursor:not-allowed;{% endif %}">
+                    <input type="checkbox" name="tree_keys" value="{{ item.model_key }}" {% if item.model_key in selected_scope.tree %}checked{% endif %} {% if selected_site.is_builtin == 1 or item.is_active != 1 %}disabled{% endif %} title="{% if item.is_active != 1 %}该模型未激活{% else %}{% endif %}">
+                    {{ item.model_key }}{% if item.is_active != 1 %} <span style="color:#999;font-size:0.85em;">(未激活)</span>{% endif %}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="row">
+            <label>定量模型</label>
+            <div>
+                {% for item in quantitative_models %}
+                <label style="display:inline-block; margin-right:12px; margin-bottom:6px;{% if item.is_active != 1 %}opacity:0.5;cursor:not-allowed;{% endif %}">
+                    <input type="checkbox" name="quantitative_keys" value="{{ item.compound_key }}" {% if item.compound_key in selected_scope.quantitative %}checked{% endif %} {% if selected_site.is_builtin == 1 or item.is_active != 1 %}disabled{% endif %} title="{% if item.is_active != 1 %}该模型未激活{% else %}{% endif %}">
+                    {{ item.compound_key }}{% if item.is_active != 1 %} <span style="color:#999;font-size:0.85em;">(未激活)</span>{% endif %}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if selected_site.is_builtin == 1 %}
+        <button class="btn btn-disabled" type="button" disabled>默认站点不可修改</button>
+        {% else %}
+        <button class="btn" type="submit">保存站点配置</button>
+        {% endif %}
+    </form>
+</article>
+<script>
+(function () {
+    function countChecked(name) {
+        var nodes = document.querySelectorAll('input[name="' + name + '"]:checked');
+        return nodes ? nodes.length : 0;
+    }
+
+    function updateCounters() {
+        var svm = document.getElementById('svm-count');
+        var tree = document.getElementById('tree-count');
+        var quant = document.getElementById('quant-count');
+        if (!svm || !tree || !quant) {
+            return;
+        }
+        svm.textContent = String(countChecked('svm_keys'));
+        tree.textContent = String(countChecked('tree_keys'));
+        quant.textContent = String(countChecked('quantitative_keys'));
+    }
+
+    document.addEventListener('change', function (event) {
+        var target = event.target;
+        if (!target || target.tagName !== 'INPUT') {
+            return;
+        }
+        if (target.name === 'svm_keys' || target.name === 'tree_keys' || target.name === 'quantitative_keys') {
+            updateCounters();
+        }
+    });
+
+    updateCounters();
+})();
+</script>
+{% else %}
+<article class="card">
+    <h2>新增站点</h2>
+    {% if site_message %}<p class="msg ok">{{ site_message }}</p>{% endif %}
+    {% if site_error %}<p class="msg err">{{ site_error }}</p>{% endif %}
+
+    <form class="align-label-right" method="post" action="{{ url_for('model_admin.create_site_profile_action') }}">
+        <div class="row">
+            <label for="site_key">站点标识</label>
+            <input id="site_key" name="site_key" type="text" required placeholder="例如: DemoSite">
+        </div>
+        <!-- <div class="row">
+            <label for="display_name">显示名称</label>
+            <input id="display_name" name="display_name" type="text" placeholder="可留空，默认与站点标识一致">
+        </div> -->
+        <button class="btn" type="submit">创建站点</button>
+    </form>
+</article>
+
+<article class="card">
+    <h2>当前站点（{{ sites|length }}）</h2>
+    <div class="table-shell">
+    <table>
+        <thead>
+        <tr>
+            <th>site_key</th>
+            <th>display_name</th>
+            <th>内置</th>
+            <th>方法数</th>
+            <th>模型数</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in sites %}
+        <tr>
+            <td>{{ item.site_key }}</td>
+            <td>{{ item.display_name }}</td>
+            <td>
+                {% if item.is_builtin == 1 %}
+                <span class="badge">内置</span>
+                {% else %}
+                <span class="badge" style="background:#e8f7ed;color:#0a7d31;">自定义</span>
+                {% endif %}
+            </td>
+            <td>{{ item.method_count }}</td>
+            <td>{{ item.model_count }}</td>
+            <td>
+                <a href="{{ url_for('model_admin.site_admin_page', site_key=item.site_key) }}">配置</a>
+                {% if item.is_builtin != 1 %}
+                <form class="inline-form" method="post" action="{{ url_for('model_admin.delete_site_profile_action') }}" onsubmit="return confirm('确认删除站点 {{ item.site_key }} 吗？删除后将移除站点与模型映射关系。')" style="margin-left:8px;">
+                    <input type="hidden" name="site_key" value="{{ item.site_key }}">
+                    <button class="btn btn-danger" type="submit">删除</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</article>
+{% endif %}
+{% endblock %}

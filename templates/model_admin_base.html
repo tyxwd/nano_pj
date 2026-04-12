@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}模型配置管理{% endblock %}</title>
+    <style>
+        :root {
+            --bg: #f3f6fb;
+            --panel: #ffffff;
+            --ink: #17212b;
+            --muted: #5a6775;
+            --brand: #1d4f91;
+            --brand-2: #2e6dbd;
+            --line: #d6e0ee;
+            --ok: #0a7d31;
+            --danger: #b42318;
+            --menu-bg: #0f2137;
+            --menu-active: #78a9e0;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            background:
+                linear-gradient(0deg, rgba(26, 53, 92, 0.03), rgba(26, 53, 92, 0.03)),
+                repeating-linear-gradient(90deg, rgba(80, 104, 138, 0.045) 0, rgba(80, 104, 138, 0.045) 1px, transparent 1px, transparent 24px),
+                var(--bg);
+        }
+
+        .hero {
+            width: calc(100% - 28px);
+            margin: 14px;
+            border-radius: 10px;
+            padding: 18px 20px;
+            color: #fff;
+            background: linear-gradient(130deg, #10253e 0, #1b3f6a 100%);
+            box-shadow: 0 8px 20px rgba(18, 49, 58, 0.18);
+            border: 1px solid rgba(172, 198, 236, 0.35);
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: 26px;
+            letter-spacing: 0.3px;
+        }
+
+        .hero p {
+            margin: 8px 0 0;
+            color: #d8e6fb;
+            font-size: 14px;
+        }
+
+        .layout {
+            width: calc(100% - 28px);
+            margin: 0 14px 16px;
+            display: grid;
+            grid-template-columns: 240px minmax(0, 1fr);
+            gap: 14px;
+        }
+
+        .menu {
+            background: var(--menu-bg);
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 10px 26px rgba(19, 41, 47, 0.22);
+            height: fit-content;
+            position: sticky;
+            top: 14px;
+        }
+
+        .menu a {
+            display: block;
+            text-decoration: none;
+            color: #d3e5e6;
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 8px;
+            padding: 11px 12px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            transition: border-color .16s ease, color .16s ease, background .16s ease;
+        }
+
+        .menu a:hover {
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.22);
+        }
+
+        .menu a.active {
+            background: linear-gradient(120deg, var(--menu-active) 0, #9bc0ea 100%);
+            color: #132437;
+            border-color: transparent;
+            font-weight: 700;
+        }
+
+        .content {
+            display: grid;
+            gap: 14px;
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 14px;
+            box-shadow: 0 5px 14px rgba(21, 49, 87, 0.09);
+        }
+
+        .card h2 {
+            margin: 0 0 10px;
+            color: #1f3650;
+            font-size: 20px;
+        }
+
+        .msg {
+            margin: 0 0 14px;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 14px;
+        }
+
+        .msg.ok { background: #e8f7ed; color: var(--ok); border: 1px solid #b7e8c4; }
+        .msg.err { background: #fff2f1; color: var(--danger); border: 1px solid #f7c0bb; }
+
+        form { display: grid; gap: 10px; }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 170px 1fr;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .field-half-wrap {
+            width: 50%;
+        }
+
+        label { color: var(--muted); font-size: 14px; }
+        .align-label-right label { text-align: right; }
+
+        input[type="text"], input[type="file"], select {
+            width: 100%;
+            border: 1px solid #d7d6d2;
+            border-radius: 10px;
+            padding: 10px 12px;
+            background: #fff;
+            font-size: 14px;
+        }
+
+        .hint { color: var(--muted); font-size: 13px; }
+
+        .validation-row {
+            display: grid;
+            grid-template-columns: 170px auto;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .validation-hint {
+            font-size: 13px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .validation-hint.show { display: block; }
+        .validation-hint.valid { background: #e8f7ed; color: var(--ok); border: 1px solid #b7e8c4; }
+        .validation-hint.invalid { background: #fff2f1; color: var(--danger); border: 1px solid #f7c0bb; }
+
+        input.input-error { border-color: var(--danger) !important; }
+        input.input-valid { border-color: var(--ok) !important; }
+
+        .btn {
+            border: none;
+            border-radius: 8px;
+            padding: 12px 16px;
+            background: linear-gradient(120deg, var(--brand) 0%, var(--brand-2) 100%);
+            color: #fff;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .btn.btn-danger {
+            background: #f56c6c;
+            color: #fff;
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+
+        .btn.btn-disabled,
+        .btn:disabled {
+            background: #c0c4cc;
+            color: #fff;
+            cursor: not-allowed;
+        }
+
+        .inline-form {
+            display: inline-block;
+            margin: 0;
+        }
+
+        .table-shell {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            min-width: 720px;
+        }
+
+        th, td {
+            border-bottom: 1px solid var(--line);
+            text-align: left;
+            padding: 10px 8px;
+            vertical-align: top;
+        }
+
+        th {
+            color: #465468;
+            font-weight: 700;
+            background: #f4f8ff;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+            background: #e4f3f5;
+            color: #1f6f78;
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .menu {
+                position: static;
+                display: grid;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 10px;
+            }
+
+            .menu a {
+                margin-bottom: 0;
+                text-align: center;
+            }
+
+            .hero,
+            .layout {
+                width: calc(100% - 16px);
+                margin-left: 8px;
+                margin-right: 8px;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .row { grid-template-columns: 1fr; }
+            .validation-row { grid-template-columns: 1fr; }
+            .field-half-wrap { width: 100%; }
+            .two-col { grid-template-columns: 1fr; }
+            .align-label-right label { text-align: left; }
+            table { font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+<section class="hero">
+    <h1>模型配置管理中心</h1>
+    <p>菜单分区管理 SVM、定量、TREE 模型。当前时间：{{ now.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+</section>
+
+<div class="layout">
+    <aside class="menu">
+        <a href="{{ url_for('model_admin.svm_model_admin_page') }}" class="{% if active_menu == 'svm' %}active{% endif %}">SVM模型</a>
+        <a href="{{ url_for('model_admin.quantitative_model_admin_page') }}" class="{% if active_menu == 'quantitative' %}active{% endif %}">定量计算模型</a>
+        <a href="{{ url_for('model_admin.tree_model_admin_page') }}" class="{% if active_menu == 'tree' %}active{% endif %}">TREE模型</a>
+        <a href="{{ url_for('model_admin.site_admin_page') }}" class="{% if active_menu == 'sites' %}active{% endif %}">站点配置</a>
+    </aside>
+    <main class="content">
+        {% block content %}{% endblock %}
+    </main>
+</div>
+<script>
+(function () {
+    // 兜底：当应用挂在子路径（如 /npj）且后端未感知前缀时，
+    // 将页面里指向 /admin/... 的链接与表单动作自动改写为 /{prefix}/admin/...
+    var path = window.location.pathname || '';
+    var marker = '/admin/';
+    var idx = path.indexOf(marker);
+    if (idx <= 0) {
+        return;
+    }
+
+    var prefix = path.slice(0, idx);
+    if (!prefix || prefix === '/') {
+        return;
+    }
+
+    function rewriteUrl(url) {
+        if (typeof url !== 'string' || !url) {
+            return url;
+        }
+
+        // 兼容绝对地址与相对地址
+        var parsed;
+        try {
+            parsed = new URL(url, window.location.origin);
+        } catch (e) {
+            return url;
+        }
+
+        // 仅处理同源地址
+        if (parsed.origin !== window.location.origin) {
+            return url;
+        }
+
+        if (parsed.pathname.indexOf('/admin/') !== 0) {
+            return url;
+        }
+
+        parsed.pathname = prefix + parsed.pathname;
+        return parsed.pathname + parsed.search + parsed.hash;
+    }
+
+    var links = document.querySelectorAll('a[href^="/admin/"]');
+    for (var i = 0; i < links.length; i++) {
+        links[i].setAttribute('href', rewriteUrl(links[i].getAttribute('href')));
+    }
+
+    var forms = document.querySelectorAll('form[action^="/admin/"]');
+    for (var j = 0; j < forms.length; j++) {
+        forms[j].setAttribute('action', rewriteUrl(forms[j].getAttribute('action')));
+    }
+
+    // 防止某些浏览器/脚本在提交前重置 action，提交瞬间再次兜底。
+    document.addEventListener('submit', function (event) {
+        var form = event.target;
+        if (!form || form.tagName !== 'FORM') {
+            return;
+        }
+
+        var actionAttr = form.getAttribute('action') || '';
+        var actionProp = form.action || '';
+        var rewritten = rewriteUrl(actionAttr) || rewriteUrl(actionProp);
+        if (rewritten && rewritten !== actionAttr) {
+            form.setAttribute('action', rewritten);
+            form.action = rewritten;
+        }
+    }, true);
+})();
+</script>
+</body>
+</html>

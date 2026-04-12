@@ -1,0 +1,179 @@
+{% extends "model_admin_base.html" %}
+
+{% block title %}定量模型管理{% endblock %}
+
+{% block content %}
+<article class="card">
+    <h2>新增定量模型配置</h2>
+    {% if q_message %}<p class="msg ok">{{ q_message }}</p>{% endif %}
+    {% if q_error %}<p class="msg err">{{ q_error }}</p>{% endif %}
+
+    <form class="align-label-right" method="post"
+        action="{{ url_for('model_admin.create_quantitative_model_config') }}">
+
+        <div class="two-col">
+            <div class="row">
+                <label for="compound_key">compound_key</label>
+                <input id="compound_key" name="compound_key" type="text" required placeholder="例如: demo_compound">
+            </div>
+            <div class="row">
+
+            </div>
+        </div>
+        <div
+            style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:8px 10px;font-size:13px;color:#856404;margin-left: 180px;">
+            <strong>规则要求：</strong>仅支持英文字母、数字和下划线，且只能以英文字母开头
+        </div>
+        <div class="validation-row">
+            <div></div>
+            <div class="validation-hint" id="compound_key_hint"></div>
+        </div>
+        <div class="two-col">
+            <div class="row">
+                <label for="name_en">英文名称(name_en)</label>
+                <input id="name_en" name="name_en" type="text" required placeholder="例如: Glucose">
+            </div>
+            <div class="row">
+                <label for="name_zh">中文名称(name_zh)</label>
+                <input id="name_zh" name="name_zh" type="text" required placeholder="例如: 葡萄糖">
+            </div>
+        </div>
+
+        <div class="two-col">
+            <div class="row">
+                <label for="unit">unit</label>
+                <input id="unit" name="unit" type="text" required placeholder="例如: ug/ml">
+            </div>
+        </div>
+
+        <div class="two-col">
+            <div class="row">
+                <label for="required_rows">required_rows</label>
+                <input id="required_rows" name="required_rows" type="text" required placeholder="例如: 850">
+            </div>
+        </div>
+
+        <div class="two-col">
+            <div class="row">
+                <label for="intensity_1_index">intensity_1 index</label>
+                <input id="intensity_1_index" name="intensity_1_index" type="text" required placeholder="例如: 467">
+            </div>
+            <div class="row">
+                <label for="intensity_2_index">intensity_2 index</label>
+                <input id="intensity_2_index" name="intensity_2_index" type="text" required placeholder="例如: 795">
+            </div>
+        </div>
+
+        <div class="two-col">
+            <div class="row">
+                <label for="formula_a">formula_a</label>
+                <input id="formula_a" name="formula_a" type="text" required placeholder="例如: 0.0242">
+            </div>
+            <div class="row">
+                <label for="formula_b">formula_b</label>
+                <input id="formula_b" name="formula_b" type="text" required placeholder="例如: 0.8753">
+            </div>
+        </div>
+
+        <div class="row">
+            <label for="transform_type">transform_type</label>
+            <select id="transform_type" name="transform_type">
+                <option value="">不使用</option>
+                <option value="10^x">10^x</option>
+            </select>
+        </div>
+
+        <button class="btn" type="submit">保存定量模型</button>
+    </form>
+</article>
+
+<article class="card">
+    <h2>当前定量模型（{{ quantitative_models|length }}）</h2>
+    <div class="table-shell">
+        <table>
+            <thead>
+                <tr>
+                    <th>compound_key</th>
+                    <th>名称(中/英)</th>
+                    <th>unit</th>
+                    <th>required_rows</th>
+                    <th>formula</th>
+                    <th>intensity_1 (row/index/col)</th>
+                    <th>intensity_2 (row/index/col)</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in quantitative_models %}
+                <tr>
+                    <td>{{ item.compound_key }}</td>
+                    <td>
+                        <div>{{ item.name_zh }}</div>
+                        <div style="font-size: 0.85em; color: #666;">{{ item.name_en }}</div>
+                    </td>
+                    <td>{{ item.unit }}</td>
+                    <td>{{ item.required_rows }}</td>
+                    <td>{{ item.formula_description }}</td>
+                    <td>{{ item.intensity1_row }}/{{ item.intensity1_index }}/{{ item.intensity1_col }}</td>
+                    <td>{{ item.intensity2_row }}/{{ item.intensity2_index }}/{{ item.intensity2_col }}</td>
+                    <td>
+                        {% if item.is_builtin == 1 %}
+                        <button class="btn btn-disabled" type="button" disabled title="默认初始模型不允许删除">默认模型不可删</button>
+                        {% else %}
+                        <form class="inline-form" method="post"
+                            action="{{ url_for('model_admin.delete_quantitative_model_config') }}"
+                            onsubmit="return confirmDeleteQuantitative('{{ item.compound_key }}')">
+                            <input type="hidden" name="compound_key" value="{{ item.compound_key }}">
+                            <button class="btn btn-danger" type="submit">删除</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</article>
+
+<script>
+    const compoundKeyPattern = /^[A-Za-z][A-Za-z0-9_]*$/;
+
+    function validateCompoundKey(value) {
+        const hint = document.getElementById('compound_key_hint');
+        const input = document.getElementById('compound_key');
+
+        if (!value) {
+            hint.classList.remove('show', 'valid', 'invalid');
+            input.classList.remove('input-error', 'input-valid');
+            return;
+        }
+
+        hint.classList.add('show');
+        if (compoundKeyPattern.test(value)) {
+            hint.textContent = '✓ 编码格式正确';
+            hint.classList.add('valid');
+            hint.classList.remove('invalid');
+            input.classList.add('input-valid');
+            input.classList.remove('input-error');
+        } else {
+            hint.textContent = '✗ 仅支持英文字母、数字和下划线，且只能以英文字母开头';
+            hint.classList.add('invalid');
+            hint.classList.remove('valid');
+            input.classList.add('input-error');
+            input.classList.remove('input-valid');
+        }
+    }
+
+    document.getElementById('compound_key').addEventListener('input', function () {
+        validateCompoundKey(this.value.trim());
+    });
+
+    document.getElementById('compound_key').addEventListener('blur', function () {
+        validateCompoundKey(this.value.trim());
+    });
+
+    function confirmDeleteQuantitative(compoundKey) {
+        return window.confirm(`确认删除定量模型 ${compoundKey}？\n此操作为正式删除，将同步删除数据库记录和 assets 对应目录文件，且不可恢复。`);
+    }
+</script>
+{% endblock %}

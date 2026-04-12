@@ -27,14 +27,15 @@ def get_month_folder():
     return datetime.now().strftime("%Y%m")
 
 
-def svm_predict(model_name: str, custom_file_path=None):
+def svm_predict(model_name: str, custom_file_path=None, model_config_override=None):
     result_dict = {}
     try:
         # ===== 读取模型配置 =====
-        if model_name not in ModelConfig.SVM_MODEL_CONFIGS:
+        svm_configs = ModelConfig.SVM_MODEL_CONFIGS
+        if model_config_override is None and model_name not in svm_configs:
             return {"status": "error", "message": f"未知 SVM 模型: {model_name}"}
 
-        config = ModelConfig.SVM_MODEL_CONFIGS[model_name]
+        config = model_config_override or svm_configs[model_name]
 
         svm_model = joblib.load(config["model_path"])
         svm_scaler = joblib.load(config["scaler_path"])
@@ -334,10 +335,11 @@ def tree_predict(model_name: str, txt_file: str = None) -> dict:
     """
     result_dict = {}
     try:
-        if model_name not in ModelConfig.TREE_MODEL_CONFIGS:
+        tree_configs = ModelConfig.TREE_MODEL_CONFIGS
+        if model_name not in tree_configs:
             return {"status": "error", "message": f"未知模型名称: {model_name}"}
 
-        config = ModelConfig.TREE_MODEL_CONFIGS[model_name]
+        config = tree_configs[model_name]
         txt_file = txt_file or config['default_txt']
         model_path = config['model_path']
         training_csv = config['training_csv']

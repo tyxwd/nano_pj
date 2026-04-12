@@ -1,0 +1,135 @@
+{% extends "model_admin_base.html" %}
+
+{% block title %}TREE模型管理{% endblock %}
+
+{% block content %}
+<article class="card">
+    <h2>新增TREE模型</h2>
+    {% if tree_message %}<p class="msg ok">{{ tree_message }}</p>{% endif %}
+    {% if tree_error %}<p class="msg err">{{ tree_error }}</p>{% endif %}
+
+    <form class="align-label-right" method="post" enctype="multipart/form-data" action="{{ url_for('model_admin.create_tree_model_config') }}">
+        <div class="row">
+            <label for="model_key">模型编码(model_key)</label>
+            <input id="model_key" name="model_key" type="text" required placeholder="例如: hudemo">
+        </div>
+        <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:8px 10px;font-size:13px;color:#856404;margin-left: 180px;">
+            <strong>规则要求：</strong>仅支持英文字母、数字和下划线，且只能以英文字母开头
+        </div>
+        <div class="validation-row">
+            <div></div>
+            <div class="validation-hint" id="model_key_hint"></div>
+        </div>
+        <div class="row">
+            <label for="name_en">英文名称(name_en)</label>
+            <input id="name_en" name="name_en" type="text" required placeholder="例如: HU Demo Tree">
+        </div>
+        <div class="row">
+            <label for="name_zh">中文名称(name_zh)</label>
+            <input id="name_zh" name="name_zh" type="text" required placeholder="例如: 示例树模型">
+        </div>
+        <div class="row">
+            <label for="tree_model_file">tree_model.pkl</label>
+            <input id="tree_model_file" name="tree_model_file" type="file" accept=".pkl" required>
+        </div>
+        <div class="row">
+            <label for="training_csv_file">training.csv</label>
+            <input id="training_csv_file" name="training_csv_file" type="file" accept=".csv" required>
+        </div>
+        <div class="row">
+            <label for="newdata_file">newdata.txt</label>
+            <input id="newdata_file" name="newdata_file" type="file" accept=".txt" required>
+        </div>
+        <p class="hint">model_key 支持英文字母、数字和下划线，且只能以英文字母开头，系统会自动转小写保存。</p>
+        <p class="hint">文件将保存到 assets/tree/model_key/ 下，并固定命名为 tree_model.pkl、training.csv、newdata.txt。</p>
+        <button class="btn" type="submit">上传并创建模型</button>
+    </form>
+</article>
+
+<article class="card">
+    <h2>当前TREE模型（{{ tree_models|length }}）</h2>
+    <p class="hint">支持正式删除：删除数据库中的 TREE 模型配置，并同步删除 assets/tree/model_key/ 目录。</p>
+    <div class="table-shell">
+    <table>
+        <thead>
+        <tr>
+            <th>model_key</th>
+            <th>名称(中/英)</th>
+            <th>model_rel_path</th>
+            <th>training_rel_path</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in tree_models %}
+        <tr>
+            <td>{{ item.model_key }}</td>
+            <td>
+                <div>{{ item.name_zh }}</div>
+                <div style="font-size: 0.85em; color: #666;">{{ item.name_en }}</div>
+            </td>
+            <td>{{ item.model_rel_path }}</td>
+            <td>{{ item.training_rel_path }}</td>
+            <td>
+                {% if item.is_builtin == 1 %}
+                <button class="btn btn-disabled" type="button" disabled title="默认初始模型不允许删除">默认模型不可删</button>
+                {% else %}
+                <form class="inline-form" method="post" action="{{ url_for('model_admin.delete_tree_model_config') }}" onsubmit="return confirmDeleteTree('{{ item.model_key }}')">
+                    <input type="hidden" name="model_key" value="{{ item.model_key }}">
+                    <button class="btn btn-danger" type="submit">删除</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</article>
+
+<script>
+const modelKeyPattern = /^[A-Za-z][A-Za-z0-9_]*$/;
+
+function validateModelKey(value) {
+    const hint = document.getElementById('model_key_hint');
+    const input = document.getElementById('model_key');
+
+    if (!hint || !input) {
+        return;
+    }
+
+    if (!value) {
+        hint.classList.remove('show', 'valid', 'invalid');
+        input.classList.remove('input-error', 'input-valid');
+        return;
+    }
+
+    hint.classList.add('show');
+    if (modelKeyPattern.test(value)) {
+        hint.textContent = '✓ 编码格式正确';
+        hint.classList.add('valid');
+        hint.classList.remove('invalid');
+        input.classList.add('input-valid');
+        input.classList.remove('input-error');
+    } else {
+        hint.textContent = '✗ 仅支持英文字母、数字和下划线，且只能以英文字母开头';
+        hint.classList.add('invalid');
+        hint.classList.remove('valid');
+        input.classList.add('input-error');
+        input.classList.remove('input-valid');
+    }
+}
+
+document.getElementById('model_key').addEventListener('input', function() {
+    validateModelKey(this.value.trim());
+});
+
+document.getElementById('model_key').addEventListener('blur', function() {
+    validateModelKey(this.value.trim());
+});
+
+function confirmDeleteTree(modelKey) {
+    return window.confirm(`确认删除TREE模型 ${modelKey}？\n此操作为正式删除，将同步删除数据库记录和 assets 对应目录文件，且不可恢复。`);
+}
+</script>
+{% endblock %}
