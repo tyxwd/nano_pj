@@ -26,6 +26,7 @@ from config.model_config_repository import (
     get_tree_model_usage_in_sites,
     list_site_profiles,
     list_quantitative_compounds,
+    list_probability_labels,
     list_svm_models,
     list_tree_models,
     quantitative_compound_exists,
@@ -188,6 +189,40 @@ def quantitative_model_admin_page():
         q_error=request.args.get("q_error", ""),
         now=datetime.now(),
         active_menu="quantitative",
+    )
+
+
+@model_admin_bp.route("/admin/models/probability-labels", methods=["GET"])
+def probability_label_admin_page():
+    return render_template(
+        "model_admin_probability_labels.html",
+        probability_labels=list_probability_labels(ModelConfig.DB_PATH),
+        prob_message=request.args.get("prob_message", ""),
+        prob_error=request.args.get("prob_error", ""),
+        now=datetime.now(),
+        active_menu="probability_labels",
+    )
+
+
+@model_admin_bp.route("/admin/models/probability-labels/edit/<label_key>", methods=["GET"])
+def edit_probability_label_page(label_key):
+    label_key = str(label_key or "").strip()
+    if not label_key:
+        return redirect(url_for("model_admin.probability_label_admin_page", prob_error="标签键不能为空"))
+
+    label_map = get_probability_labels(ModelConfig.DB_PATH, [label_key])
+    label = label_map.get(label_key)
+    if not label:
+        return redirect(url_for("model_admin.probability_label_admin_page", prob_error=f"标签不存在: {label_key}"))
+
+    return render_template(
+        "model_admin_probability_labels.html",
+        label_key=label_key,
+        label=label,
+        prob_message=request.args.get("prob_message", ""),
+        prob_error=request.args.get("prob_error", ""),
+        now=datetime.now(),
+        active_menu="probability_labels",
     )
 
 
@@ -439,6 +474,48 @@ def create_svm_model_config():
         return redirect(
             url_for("model_admin.svm_model_admin_page", svm_error=f"创建失败: {str(exc)}")
         )
+
+
+@model_admin_bp.route("/admin/models/probability-labels/save", methods=["POST"])
+def save_probability_label_action():
+    label_key = str(request.form.get("label_key", "")).strip()
+    label_en = str(request.form.get("label_en", "")).strip()
+    label_zh = str(request.form.get("label_zh", "")).strip()
+
+    if not label_key:
+        return redirect(url_for("model_admin.probability_label_admin_page", prob_error="保存失败: 标签键不能为空"))
+    if not label_en or not label_zh:
+        return redirect(url_for("model_admin.edit_probability_label_page", label_key=label_key, prob_error=f"保存失败: {label_key} 的中英文名称不能为空"))
+
+    try:
+        upsert_probability_labels(
+            ModelConfig.DB_PATH,
+            [{"label_key": label_key, "label_en": label_en, "label_zh": label_zh}],
+        )
+        return redirect(url_for("model_admin.edit_probability_label_page", label_key=label_key, prob_message=f"已保存翻译: {label_key}"))
+    except Exception as exc:
+        return redirect(url_for("model_admin.edit_probability_label_page", label_key=label_key, prob_error=f"保存失败: {str(exc)}"))
+
+
+@model_admin_bp.route("/admin/models/probability-labels/add", methods=["POST"])
+def add_probability_label_action():
+    label_key = str(request.form.get("label_key", "")).strip()
+    label_en = str(request.form.get("label_en", "")).strip()
+    label_zh = str(request.form.get("label_zh", "")).strip()
+
+    if not label_key:
+        return redirect(url_for("model_admin.probability_label_admin_page", prob_error="新增失败: 标签键不能为空"))
+    if not label_en or not label_zh:
+        return redirect(url_for("model_admin.probability_label_admin_page", prob_error=f"新增失败: {label_key} 的中英文名称不能为空"))
+
+    try:
+        upsert_probability_labels(
+            ModelConfig.DB_PATH,
+            [{"label_key": label_key, "label_en": label_en, "label_zh": label_zh}],
+        )
+        return redirect(url_for("model_admin.probability_label_admin_page", prob_message=f"已新增翻译: {label_key}"))
+    except Exception as exc:
+        return redirect(url_for("model_admin.probability_label_admin_page", prob_error=f"新增失败: {str(exc)}"))
 
 
 @model_admin_bp.route("/admin/models/svm/activate/check", methods=["POST"])

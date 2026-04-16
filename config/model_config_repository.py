@@ -440,7 +440,7 @@ def create_svm_model(
     default_txt_rel_path: str,
 ):
     with _connection(db_path) as conn:
-        auto_name = f"{model_key.upper()}_SM"
+        auto_name = f"{model_key.upper()}_SVM"
         conn.execute(
             """
             INSERT INTO svm_models (
@@ -560,6 +560,19 @@ def upsert_probability_labels(db_path: str, labels):
         )
 
     return len(clean_rows)
+
+
+def list_probability_labels(db_path: str):
+    with _connection(db_path) as conn:
+        rows = conn.execute(
+            """
+            SELECT label_key, label_en, label_zh
+            FROM probability_labels
+            ORDER BY label_key
+            """
+        ).fetchall()
+
+    return [dict(row) for row in rows]
 
 
 def list_tree_models(db_path: str):

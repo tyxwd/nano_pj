@@ -1,0 +1,107 @@
+{% extends "model_admin_base.html" %}
+
+{% block title %}标签中英翻译管理{% endblock %}
+
+{% block content %}
+<style>
+    .probability-table table {
+        min-width: 880px;
+    }
+
+    .probability-table td.action-cell {
+        white-space: nowrap;
+    }
+
+    @media (max-width: 760px) {
+        .probability-table table {
+            min-width: 760px;
+        }
+    }
+</style>
+
+{% if prob_message %}<p class="msg ok">{{ prob_message }}</p>{% endif %}
+{% if prob_error %}<p class="msg err">{{ prob_error }}</p>{% endif %}
+
+{% if label_key and label %}
+<article class="card">
+    <h2>编辑标签中英翻译</h2>
+    <p class="hint">这里用于修改已有标签的中英文翻译，修改后点击保存即可。</p>
+
+    <form class="align-label-right" method="post" action="{{ url_for('model_admin.save_probability_label_action') }}">
+        <div class="row">
+            <label for="label_key">标签键(label_key)</label>
+            <input id="label_key" name="label_key" type="text" value="{{ label_key }}" readonly>
+        </div>
+        <div class="row">
+            <label for="label_en">英文名称(label_en)</label>
+            <input id="label_en" name="label_en" type="text" required value="{{ label.label_en }}">
+        </div>
+        <div class="row">
+            <label for="label_zh">中文名称(label_zh)</label>
+            <input id="label_zh" name="label_zh" type="text" required value="{{ label.label_zh }}">
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn" type="submit">保存修改</button>
+            <a class="btn" style="display:inline-block;text-decoration:none;" href="{{ url_for('model_admin.probability_label_admin_page') }}">返回列表</a>
+        </div>
+    </form>
+</article>
+{% else %}
+
+<article class="card">
+    <h2>新增标签中英翻译</h2>
+    <p class="hint">这里用于补充新的标签翻译，或在标签首次出现之前提前登记中英文名称。</p>
+
+    <form class="align-label-right" method="post" action="{{ url_for('model_admin.add_probability_label_action') }}">
+        <div class="row">
+            <label for="label_key">标签键(label_key)</label>
+            <input id="label_key" name="label_key" type="text" required placeholder="例如: class_a">
+        </div>
+        <div class="row">
+            <label for="label_en">英文名称(label_en)</label>
+            <input id="label_en" name="label_en" type="text" required placeholder="例如: Probability of class A">
+        </div>
+        <div class="row">
+            <label for="label_zh">中文名称(label_zh)</label>
+            <input id="label_zh" name="label_zh" type="text" required placeholder="例如: A类概率">
+        </div>
+        <button class="btn" type="submit">新增或覆盖保存</button>
+    </form>
+</article>
+
+<article class="card">
+    <h2>当前标签中英翻译（{{ probability_labels|length }}）</h2>
+    <p class="hint">这里只做查看，点击“修改”进入独立编辑页。</p>
+
+    {% if probability_labels %}
+    <div class="table-shell probability-table">
+        <table>
+            <thead>
+            <tr>
+                <th>标签键</th>
+                <th>英文名称</th>
+                <th>中文名称</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in probability_labels %}
+            <tr>
+                <td>{{ item.label_key }}</td>
+                <td>{{ item.label_en }}</td>
+                <td>{{ item.label_zh }}</td>
+                <td class="action-cell">
+                    <a class="btn" style="display:inline-block;text-decoration:none;" href="{{ url_for('model_admin.edit_probability_label_page', label_key=item.label_key) }}">修改</a>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="hint">当前没有概率标签记录。</p>
+    {% endif %}
+</article>
+
+{% endif %}
+{% endblock %}

@@ -54,7 +54,7 @@
 
 {% if pending_model_key and all_prob_labels %}
 <article class="card" style="border: 1px solid #f0b45a;">
-    <h2>激活前补充概率标签翻译</h2>
+    <h2>激活前补充标签中英翻译</h2>
     <p class="hint">模型 {{ pending_model_key }} 检测到以下概率标签，请补全未登记项后激活。</p>
     <form class="align-label-right" method="post" action="{{ url_for('model_admin.register_prob_labels_and_activate_svm_model') }}">
         <input type="hidden" name="model_key" value="{{ pending_model_key }}">
